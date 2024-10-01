@@ -29,6 +29,10 @@ auc_base_per = []
 acc_yours_per = []
 auc_yours_per = []
 
+# Hyper-parameter values for class_weight
+class_weight_values = [None, 'balanced', {0: 1, 1: 2}, {0: 1, 1: 5}, {0: 1, 1: 10}]
+auc_hyper_param = []
+
 for per in num_train_per: 
 
     # create training data and label
@@ -85,7 +89,14 @@ for per in num_train_per:
     auc_yours = roc_auc_score(label_test, prob_test)
     auc_yours_per.append(auc_yours)
     # --- end of task --- #
-    
+
+# Evaluate the impact of the hyper-parameter on AUC score
+for class_weight in class_weight_values:
+    model = LogisticRegression(max_iter=1000, class_weight=class_weight)
+    model.fit(sample_train_balanced, label_train_balanced)
+    prob_test = model.predict_proba(sample_test)[:, 1]
+    auc = roc_auc_score(label_test, prob_test)
+    auc_hyper_param.append(auc)
 
 plt.figure()    
 plt.plot(num_train_per,acc_base_per, label='Base Accuracy')
@@ -103,4 +114,10 @@ plt.ylabel('Classification AUC Score')
 plt.legend()
 plt.title('Model AUC Score vs Training Data Size')
 
+# Plot the impact of the hyper-parameter on AUC score
+plt.figure()
+plt.plot([str(cw) for cw in class_weight_values], auc_hyper_param, marker='o')
+plt.xlabel('Class Weight')
+plt.ylabel('AUC Score')
+plt.title('Impact of Class Weight on AUC Score')
 plt.show()
